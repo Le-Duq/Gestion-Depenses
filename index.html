@@ -30,11 +30,18 @@
         <tr><td id="cat_elec">Électricité</td><td><input type="number" id="elec"></td><td><input type="number" id="elec_paye"></td></tr>
         <tr><td id="cat_course">Course</td><td><input type="number" id="course"></td><td><input type="number" id="course_paye"></td></tr>
         <tr><td id="cat_resto">Resto</td><td><input type="number" id="resto"></td><td><input type="number" id="resto_paye"></td></tr>
-        <tr><td id="cat_activite">Activité</td><td><input type="number" id="activite"></td><td><input type="number" id="activite_paye"></td></tr>
-        <tr><td id="cat_essence">Essence</td><td><input type="number" id="essence"></td><td><input type="number" id="essence_paye"></td></tr>
-        <tr><td id="cat_economie">Économie</td><td><input type="number" id="economie"></td><td><input type="number" id="economie_paye"></td></tr>
+        <tr><td id="cat_activite">Activité</td><td><input type="number" id="activite"></td><td><input type="number" id="activite_paye"></tr>
+        <tr><td id="cat_essence">Essence</td><td><input type="number" id="essence"></td><td><input type="number" id="essence_paye"></tr>
+        <tr><td id="cat_economie">Économie</td><td><input type="number" id="economie"></td><td><input type="number" id="economie_paye"></tr>
+        <tr><td id="cat_autre">Autre</td><td><input type="number" id="autre"></td><td><input type="number" id="autre_paye"></td></tr>
+        <!-- LIGNE TOTAUX GÉNÉRAUX -->
+        <tr class="total-row">
+            <td style="font-weight:bold;">Total général</td>
+            <td><span id="total_a_payer"></span></td>
+            <td><span id="total_deja_paye"></span></td>
+        </tr>
     </table>
-    
+
     <h3>Compte</h3>
     <table id="compteTable">
         <tr><th>APL</th><th>Prime d'activité</th><th>Clara</th><th>Baptiste</th><th>Total</th></tr>
@@ -46,13 +53,13 @@
             <td class="total"><span id="total_compte"></span></td>
         </tr>
     </table>
-    
+
     <h3>Total Restant</h3>
     <table id="totalTable">
         <tr><th>Compte</th><th>Déjà Payé</th><th>Total</th></tr>
         <tr><td><span id="compte_total"></span></td><td><span id="deja_paye"></span></td><td class="total"><span id="total_restant"></span></td></tr>
     </table>
-    
+
     <button onclick="generatePDF()">Télécharger en PDF</button>
 
     <script>
@@ -73,7 +80,6 @@
         function generatePDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            
             html2canvas(document.body).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
                 const imgWidth = 190;
@@ -83,25 +89,30 @@
             });
         }
 
-        document.querySelectorAll("input[type=number]").forEach(input => {
-            input.addEventListener("input", function() {
-                updateColors();
-            });
-        });
-        
-        updateColors();
-    </script>
-
-    <script>
         function updateTotals() {
+            // Compte total
             let totalCompte = ["apl", "prime", "clara", "baptiste"].reduce((sum, id) => sum + Number(document.getElementById(id).value || 0), 0);
             document.getElementById("total_compte").innerText = totalCompte;
             document.getElementById("compte_total").innerText = totalCompte;
 
-            let totalPaye = Array.from(document.querySelectorAll("input[id$='_paye']"))
-                .reduce((sum, input) => sum + Number(input.value || 0), 0);
+            // Déjà payé total
+            let totalPaye = 0;
+            let totalAPayer = 0;
+            document.querySelectorAll("input[id$='_paye']").forEach(input => {
+                totalPaye += Number(input.value || 0);
+            });
+            document.querySelectorAll("input[id]:not([id$='_paye'])").forEach(input => {
+                if (!["apl", "prime", "clara", "baptiste"].includes(input.id)) {
+                    totalAPayer += Number(input.value || 0);
+                }
+            });
+
             document.getElementById("deja_paye").innerText = totalPaye;
             document.getElementById("total_restant").innerText = totalCompte - totalPaye;
+
+            // Totaux généraux dans le tableau principal
+            document.getElementById("total_a_payer").innerText = totalAPayer;
+            document.getElementById("total_deja_paye").innerText = totalPaye;
         }
 
         function saveData() {
@@ -119,28 +130,14 @@
             updateTotals();
         }
 
-        function updateColors() {
-            document.querySelectorAll("input[id$='_paye']").forEach(input => {
-                let aPayerInput = document.getElementById(input.id.replace("_paye", ""));
-                let categoryCell = document.getElementById("cat_" + input.id.replace("_paye", ""));
-                if (input.value == aPayerInput.value) {
-                    categoryCell.classList.add("paye-complet");
-                    categoryCell.classList.remove("paye-incomplet");
-                } else {
-                    categoryCell.classList.add("paye-incomplet");
-                    categoryCell.classList.remove("paye-complet");
-                }
-            });
-        }
-
         document.querySelectorAll("input[type=number]").forEach(input => {
-            input.addEventListener("input", function() {
+            input.addEventListener("input", function () {
                 saveData();
                 updateTotals();
                 updateColors();
             });
         });
-        
+
         loadData();
         updateColors();
     </script>
