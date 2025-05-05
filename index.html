@@ -138,16 +138,37 @@
     }
 
     function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        html2canvas(document.body).then(canvas => {
-            const imgData = canvas.toDataURL('image/png');
-            const imgWidth = 190;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-            doc.save('suivi_depenses.pdf');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    html2canvas(document.body).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 190;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+        doc.save('suivi_depenses.pdf');
+
+        // ✅ Réinitialisation après téléchargement
+        localStorage.clear();
+
+        // Réinitialiser tous les champs
+        document.querySelectorAll("input[type=number]").forEach(input => input.value = '');
+        categories.forEach(cat => {
+            document.getElementById(`${cat}_paye_total`).innerText = '0';
+            document.getElementById(`${cat}_historique`).innerText = '';
         });
-    }
+
+        // Réinitialiser les totaux
+        document.getElementById("total_a_payer").innerText = '';
+        document.getElementById("total_deja_paye").innerText = '';
+        document.getElementById("deja_paye").innerText = '';
+        document.getElementById("total_compte").innerText = '';
+        document.getElementById("compte_total").innerText = '';
+        document.getElementById("total_restant").innerText = '';
+
+        // Rafraîchir l'affichage
+        updateCompte();
+    });
+}
 
     document.querySelectorAll("input[type=number]").forEach(input => {
         input.addEventListener("input", () => {
